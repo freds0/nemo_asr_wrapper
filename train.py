@@ -25,7 +25,14 @@ def execute_train(args):
     params['model']['validation_ds']['batch_size'] = 4
 
     # This line will download pre-trained QuartzNet15x5 model from NVIDIA's NGC cloud and instantiate it for you
-    model = nemo_asr.models.EncDecCTCModel.from_pretrained(model_name="QuartzNet15x5Base-En")
+
+    if args.model_path.endswith('.ckpt'):
+        model = nemo_asr.models.EncDecCTCModel.load_from_checkpoint(checkpoint_path=args.model_path)
+    elif args.model_path.endswith('nemo'):
+        model = nemo_asr.models.EncDecCTCModel.restore_from(restore_path=args.model_path)
+    else:
+        model = nemo_asr.models.EncDecCTCModel.from_pretrained(model_name=args.model_path)
+
     # Point to the new validation data for fine-tuning
     #model.setup_validation_data(val_data_config=params['model']['validation_ds'])
 
@@ -65,6 +72,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_dir', default='./')
     parser.add_argument('-c', '--config_file', default='configs/config.yaml', help='Yaml config filepath.')
+    parser.add_argument('-m', '--model_path', default="QuartzNet15x5Base-En", help='Yaml config
     parser.add_argument('-e', '--num_epochs', type=int, default=30)
     parser.add_argument('-b', '--batch_size', type=int, default=40)
     parser.add_argument('-g', '--num_gpus', type=int, default=1)
